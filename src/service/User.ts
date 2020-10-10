@@ -1,26 +1,30 @@
 import DbInstance from '../database';
 import Utils from '../utils';
-export default class User {
+export default class UserService {
   Db: DbInstance;
   utils: Utils;
   constructor() {
     this.Db = new DbInstance();
-    this.utils = new Utils();
+    this.utils = Utils.getInstance();
   }
 
   /**
    * 登录
-   * @parm {username,passowrd}
+   * @parm {username,password}
    */
-  login(username: string, passowrd: string): void {}
+  async login(username: string, password: string, role: number = 0) {
+    const result = await this.checkPassword(username, password, role);
+    if (result.match) return { match: false, user: {} };
+    return result;
+  }
 
   // 注册
-  async register(username: string, passowrd: string) {
-    const encrypted: string = this.utils.hashpassword(username, passowrd);
+  async register(username: string, password: string) {
+    const encrypted: string = this.utils.hashpassword(username, password);
     const code: string = this.utils.getUid(12, 'both');
     try {
       const sql: string = await this.Db.formatSql('insert into user set ?', [
-        { username, passowrd: encrypted, code }
+        { username, password: encrypted, code }
       ]);
       const _user: object = await this.Db.query(sql);
       return { success: true, data: _user, code: 0 };
@@ -35,19 +39,19 @@ export default class User {
   // 验证密码
   private async checkPassword(
     username: string,
-    passowrd: string,
+    password: string,
     role: number
   ) {
     const sql: string = this.Db.formatSql(
       `select password from user where username=? and role=?`,
-      [{ username, role }]
+      [username, role]
     );
     const _user = await this.Db.query(sql);
     if (_user.length) {
       const user = _user[0];
-      const encrypted: string = this.utils.hashpassword(username, passowrd);
-      if (user.passowrd == encrypted) {
-        delete user.passowrd;
+      const encrypted: string = this.utils.hashpassword(username, password);
+      if (user.password == encrypted) {
+        delete user.password;
         return { match: true, user };
       }
     }

@@ -7,7 +7,7 @@ const mysql_config = {
 
 const common = {
   port: 60001,
-  salt: 'blog@qxg'
+  salt: 'blog@qxgblog@qxg'
 };
 
 export default {

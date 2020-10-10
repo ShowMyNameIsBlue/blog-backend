@@ -9,16 +9,17 @@ import * as os from 'os';
 // 工具类
 
 export default class Utils {
-  ciper: any = crypto.createCipheriv(
-    'aes192',
-    config.common.salt,
-    config.common.salt
-  );
+  static instance: Utils;
 
   // 密码加密
   hashpassword(username: string, password: string): string {
-    this.ciper.update(String(username) + String(password));
-    return this.ciper.final('hex');
+    const ciper = crypto.createCipheriv(
+      'aes-128-cbc',
+      config.common.salt,
+      config.common.salt
+    );
+    ciper.update(String(username) + String(password));
+    return ciper.final('hex');
   }
 
   // 获取表单上传处理对象
@@ -72,5 +73,9 @@ export default class Utils {
       result += chars[Math.floor(Math.random() * chars.length)];
     }
     return result;
+  }
+  public static getInstance(): Utils {
+    if (!this.instance) return new Utils();
+    return this.instance;
   }
 }

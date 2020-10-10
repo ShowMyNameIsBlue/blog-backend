@@ -4,7 +4,7 @@ import * as bodyParser from 'koa-bodyparser';
 
 import * as statics from 'koa-static';
 
-import { mkdirSync } from 'fs';
+import * as fs from 'fs';
 
 import * as os from 'os';
 
@@ -20,12 +20,14 @@ export default class Middlewares {
   }
 
   addBodyParser(): void {
-    this.app.use(bodyParser);
+    this.app.use(bodyParser());
   }
 
   addStatic(target: string = '/blog'): void {
     const path: string = os.tmpdir() + target;
-    mkdirSync(path);
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path);
+    }
     this.app.use(statics(path));
   }
 }
