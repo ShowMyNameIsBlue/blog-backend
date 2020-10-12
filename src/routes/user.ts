@@ -1,15 +1,17 @@
 import * as Router from 'koa-router';
 import Utils from '../utils';
 import UserService from '../service/User';
-
+import Auths from '../auth';
 export default class UserRoute {
-  user: UserService;
   private router: Router;
+  user: UserService;
   utils: Utils;
+  auths: Auths;
   constructor() {
     this.router = new Router();
     this.user = new UserService();
     this.utils = Utils.getInstance();
+    this.auths = new Auths();
     this.init();
   }
   /**
@@ -44,6 +46,10 @@ export default class UserRoute {
 
     // 用户登录
     this.router.post('/login', async (ctx: any) => {
+      if (ctx.session.user) {
+        ctx.body = { code: 0, data: ctx.session.user };
+        return;
+      }
       this.utils.required(
         {
           body: ['username', 'password']
@@ -63,6 +69,17 @@ export default class UserRoute {
           code: 401,
           msg: '账号或密码不正确'
         };
+      }
+    });
+
+    // 用户退出登录
+    this.router.post('/exit', this.auths.sessionAuth, async (ctx: any) => {
+      if (ctx.session.user) {
+        const user: object = ctx.session.user;
+        delete ctx.session.user;
+        ctx.body = { data: user, code: 0 };
+      } else {
+        ctx.throw(401, '用户登录');
       }
     });
   }

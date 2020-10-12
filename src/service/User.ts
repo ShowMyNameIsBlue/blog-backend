@@ -4,7 +4,7 @@ export default class UserService {
   Db: DbInstance;
   utils: Utils;
   constructor() {
-    this.Db = new DbInstance();
+    this.Db = DbInstance.getInstance();
     this.utils = Utils.getInstance();
   }
 
@@ -14,11 +14,15 @@ export default class UserService {
    */
   async login(username: string, password: string, role: number = 0) {
     const result = await this.checkPassword(username, password, role);
-    if (result.match) return { match: false, user: {} };
+    if (!result.match) return { match: false, user: {} };
     return result;
   }
 
-  // 注册
+  /**
+   * 注册
+   * @param username
+   * @param password
+   */
   async register(username: string, password: string) {
     const encrypted: string = this.utils.hashpassword(username, password);
     const code: string = this.utils.getUid(12, 'both');
@@ -43,7 +47,7 @@ export default class UserService {
     role: number
   ) {
     const sql: string = this.Db.formatSql(
-      `select password from user where username=? and role=?`,
+      `select * from user where username=? and role=?`,
       [username, role]
     );
     const _user = await this.Db.query(sql);

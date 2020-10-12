@@ -11,6 +11,7 @@ export default class RouterObj {
   }
 
   init() {
+    // 用户路由
     this.router.use(
       '/user',
       this.user.getRouter().routes(),

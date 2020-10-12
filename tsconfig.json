@@ -11,7 +11,7 @@
       "*": ["node_modules/*", "src/types/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "sqlProcess.ts"],
   "exclude": ["node_modules"],
   "files": ["app.ts", "index.ts", "init.ts"]
 }

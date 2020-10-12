@@ -6,6 +6,7 @@
   "scripts": {
     "serve": " pm2 start disk/index.js --watch",
     "build": "tsc --watch",
+    "build_sql_files":"node disk/sqlProcess.js",
     "test": "echo \"Warnning: no test specified\" && exit 1"
   },
   "keywords": [
