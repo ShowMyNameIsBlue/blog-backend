@@ -27,6 +27,8 @@ export default class Utils {
     const form: any = new formidable.IncomingForm();
     form.uploadDir = path;
     form.keepExtensions = true;
+    form.encoding = 'utf-8';
+    form.maxFieldsSize = 4 * 1024 * 1024;
     return form;
   }
 

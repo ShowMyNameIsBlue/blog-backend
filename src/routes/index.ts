@@ -1,11 +1,21 @@
 import * as Router from 'koa-router';
 import UserRoute from './user';
+import TagRoute from './tag';
+import CategoryRoute from './category';
+import Auths from '../auth';
 export default class RouterObj {
   prefix: string;
   private router: any;
-  user: UserRoute = new UserRoute();
+  user: UserRoute;
+  tag: TagRoute;
+  category: CategoryRoute;
+  auth: Auths;
   constructor(prefix: string = '/api/v0') {
     this.prefix = prefix;
+    this.auth = new Auths();
+    this.user = new UserRoute();
+    this.tag = new TagRoute();
+    this.category = new CategoryRoute();
     this.router = new Router({ prefix });
     this.init();
   }
@@ -16,6 +26,24 @@ export default class RouterObj {
       '/user',
       this.user.getRouter().routes(),
       this.user.getRouter().allowedMethods()
+    );
+
+    // 标签路由
+    this.router.use(
+      '/tag',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      this.tag.getRouter().routes(),
+      this.tag.getRouter().allowedMethods()
+    );
+
+    // 博文分类路由
+    this.router.use(
+      '/category',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      this.category.getRouter().routes(),
+      this.category.getRouter().allowedMethods()
     );
   }
 
