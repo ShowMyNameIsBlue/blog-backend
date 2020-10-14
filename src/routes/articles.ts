@@ -2,8 +2,6 @@ import * as Router from 'koa-router';
 import Utils from '../utils';
 import ArticlesService from '../service/Articles';
 import * as fs from 'fs';
-import * as Path from 'path';
-import * as marked from 'marked';
 export default class ArticlesRoute {
   private router: Router;
   article: ArticlesService;
@@ -19,45 +17,102 @@ export default class ArticlesRoute {
    */
   init(): void {
     // 上传博文
-    this.router.post('/uploadBlog', async (ctx) => {
-      const form = this.utils.getForm();
-      //   const rendererMD = new marked.Renderer();
-      //   marked.setOptions({
-      //     renderer: rendererMD,
-      //     gfm: true,
-      //     breaks: false,
-      //     pedantic: false,
-      //     sanitize: false,
-      //     smartLists: true,
-      //     smartypants: false
-      //   }); //基本设置
-      const p = new Promise((resolve, reject) => {
-        form.parse(ctx.req, function (e: Error, fields: any, files: any) {
-          // const { features } = ctx.request.body;
-          if (e) reject(e);
-          console.log(fields);
-          console.log(files);
-          const { title } = fields;
-          const { name, path } = files.file;
-          let readStream = fs.createReadStream(Path.resolve(path, name));
-          let content: string = '';
-          // 读取文件内容
-          readStream.on('data', (chunk: string) => {
-            content += chunk;
+    this.router.post('/upload', async (ctx) => {
+      const r: any = await this.uploadFile(ctx);
+      const { title, content, tag, category } = r;
+      const pageviews: number = 0;
+      const result = await this.article.uploadBlog(
+        title,
+        content,
+        tag,
+        category,
+        pageviews
+      );
+      if (result.success) {
+        const { data, code } = result;
+        ctx.body = {
+          data,
+          code
+        };
+      } else {
+        ctx.body = {
+          code: result.code,
+          msg: result.msg
+        };
+        ctx.throw(result.code, result.msg);
+      }
+    });
+
+    // 获取博文
+    this.router.get('/:aid', async (ctx) => {
+      this.utils.required(
+        {
+          params: ['aid']
+        },
+        ctx
+      );
+      const { aid } = ctx.params;
+      const result = await this.article.getOne(aid);
+      if (result.success) {
+        const { data, code } = result;
+        ctx.body = {
+          data,
+          code
+        };
+      } else {
+        ctx.body = {
+          code: result.code,
+          msg: result.msg
+        };
+        ctx.throw(result.code, result.msg);
+      }
+    });
+
+    // 根据条件搜索博文
+    this.router.get('/search/:filter', async (ctx) => {
+      this.utils.required(
+        {
+          params: ['filter']
+        },
+        ctx
+      );
+      const filter = JSON.parse(ctx.params.filter);
+      const skip = parseInt(filter.skip, 10) || 0;
+      const limit = parseInt(filter.limit, 10) || 10;
+      const { condition } = filter;
+      const result = await this.article.getBlogs(condition, limit, skip);
+      ctx.body = result;
+    });
+  }
+
+  private uploadFile(ctx: any) {
+    const form = this.utils.getForm();
+    return new Promise((resolve, reject) => {
+      form.parse(ctx.req, function (e: Error, fields: any, files: any) {
+        if (e) reject(e);
+        const { title, tag, category } = fields;
+        const { path } = files.file;
+        const readStream = fs.createReadStream(path);
+        let content: string = '';
+        // 读取文件内容
+        readStream.on('data', (chunk: string) => {
+          content += chunk;
+        });
+        // 读取结束
+        readStream.on('end', (chunk: string) => {
+          content += chunk;
+          // 读取完成后删除文件
+          fs.unlinkSync(path);
+          resolve({
+            title,
+            content,
+            tag,
+            category
           });
-          // 读取结束
-          readStream.on('end', (chunk: string) => {
-            content += chunk;
-            resolve({
-              title,
-              content,
-              features: { watched: 0, tag: '', artType: '' }
-            });
-          });
-          // 失败
-          readStream.on('error', (err) => {
-            reject(err);
-          });
+        });
+        // 失败
+        readStream.on('error', (err) => {
+          reject(err);
         });
       });
     });

@@ -2,6 +2,7 @@ import * as Router from 'koa-router';
 import UserRoute from './user';
 import TagRoute from './tag';
 import CategoryRoute from './category';
+import ArticlesRoute from './articles';
 import Auths from '../auth';
 export default class RouterObj {
   prefix: string;
@@ -10,6 +11,7 @@ export default class RouterObj {
   tag: TagRoute;
   category: CategoryRoute;
   auth: Auths;
+  articles: ArticlesRoute;
   constructor(prefix: string = '/api/v0') {
     this.prefix = prefix;
     this.auth = new Auths();
@@ -17,6 +19,7 @@ export default class RouterObj {
     this.tag = new TagRoute();
     this.category = new CategoryRoute();
     this.router = new Router({ prefix });
+    this.articles = new ArticlesRoute();
     this.init();
   }
 
@@ -44,6 +47,15 @@ export default class RouterObj {
       this.auth.ownerAuth,
       this.category.getRouter().routes(),
       this.category.getRouter().allowedMethods()
+    );
+
+    // 博文路由
+    this.router.use(
+      '/articles',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      this.articles.getRouter().routes(),
+      this.articles.getRouter().allowedMethods()
     );
   }
 

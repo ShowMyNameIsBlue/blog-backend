@@ -1,6 +1,6 @@
 import * as Router from 'koa-router';
 import Utils from '../utils';
-import TagService from '../service/tag';
+import TagService from '../service/Tag';
 export default class TagRoute {
   private router: Router;
   tag: TagService;

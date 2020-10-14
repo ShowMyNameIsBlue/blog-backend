@@ -2,9 +2,9 @@ import * as mysql from 'mysql';
 import * as path from 'path';
 import * as fs from 'fs';
 import config from '../config';
-
+import { promisify } from 'util';
 export default class DbInstance {
-  connection: any = mysql.createConnection(config.mysql_config);
+  pool: any = mysql.createPool(config.mysql_config);
   static instance: DbInstance;
   constructor() {}
 
@@ -19,14 +19,18 @@ export default class DbInstance {
   // 执行sql语句
   query(sql: string): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      this.connection.query(sql, (err: Error, results: any) => {
-        if (err) {
-          console.log('------ error occured ------------');
-          console.log(sql);
-          console.log('---------------------------------');
-          return reject(err);
-        }
-        resolve(results);
+      this.pool.getConnection((err: Error, conn: any) => {
+        if (err) return reject(err);
+        conn.query(sql, (err: Error, results: any) => {
+          conn.release();
+          if (err) {
+            console.log('------ error occured ------------');
+            console.log(sql);
+            console.log('---------------------------------');
+            return reject(err);
+          }
+          resolve(results);
+        });
       });
     });
   }
@@ -52,6 +56,36 @@ export default class DbInstance {
     await this.initTable();
   }
 
+  // 自定义事务
+  getConnection() {
+    return new Promise((resolve, reject) => {
+      this.pool.getConnection((err: Error, connection: any) => {
+        if (err) return reject(err);
+        connection.beginTransactionAsync = promisify(
+          connection.beginTransaction
+        );
+        connection.queryAsync = promisify(connection.query);
+        connection.rollbackAsync = () => {
+          return new Promise((resolve) => {
+            connection.rollback(() => {
+              connection.release();
+              resolve();
+            });
+          });
+        };
+        connection.commitAsync = () => {
+          return new Promise((resolve, reject) => {
+            connection.commit((err: Error) => {
+              connection.release();
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+        };
+        resolve(connection);
+      });
+    });
+  }
   public static getInstance(): DbInstance {
     if (!this.instance) return new DbInstance();
     return this.instance;

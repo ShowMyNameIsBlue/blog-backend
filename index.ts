@@ -18,8 +18,6 @@ class ProcessObj {
   async init() {
     // 获取app实例
     const appInstance = this.app.getApp();
-    // 链接数据库
-    await this.db.connection;
     // 初始化数据表
     await initData();
     console.log(`Http server is up and running at port ${config.common.port}`);
@@ -29,7 +27,6 @@ class ProcessObj {
     process.on('SIGINT', () => {
       console.info('SIGINT signal received.');
       server.close(function (err) {
-        this.db.connection.end();
         if (err) {
           console.error(err);
           process.exit(1);
