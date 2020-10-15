@@ -3,6 +3,7 @@ import UserRoute from './user';
 import TagRoute from './tag';
 import CategoryRoute from './category';
 import ArticlesRoute from './articles';
+import ImagesRoute from './images';
 import Auths from '../auth';
 export default class RouterObj {
   prefix: string;
@@ -12,14 +13,16 @@ export default class RouterObj {
   category: CategoryRoute;
   auth: Auths;
   articles: ArticlesRoute;
+  images: ImagesRoute;
   constructor(prefix: string = '/api/v0') {
     this.prefix = prefix;
+    this.router = new Router({ prefix });
     this.auth = new Auths();
     this.user = new UserRoute();
     this.tag = new TagRoute();
     this.category = new CategoryRoute();
-    this.router = new Router({ prefix });
     this.articles = new ArticlesRoute();
+    this.images = new ImagesRoute();
     this.init();
   }
 
@@ -31,7 +34,7 @@ export default class RouterObj {
       this.user.getRouter().allowedMethods()
     );
 
-    // 标签路由
+    // 博文标签路由
     this.router.use(
       '/tag',
       this.auth.sessionAuth,
@@ -56,6 +59,15 @@ export default class RouterObj {
       this.auth.ownerAuth,
       this.articles.getRouter().routes(),
       this.articles.getRouter().allowedMethods()
+    );
+
+    // 图片路由
+    this.router.use(
+      '/images',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      this.images.getRouter().routes(),
+      this.images.getRouter().allowedMethods()
     );
   }
 

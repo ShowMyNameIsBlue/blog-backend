@@ -68,7 +68,6 @@ export default class ArticlesService {
 
       // 操作成功后提交事务
       await conn.commitAsync();
-      //
       return {
         success: true,
         data: { tag_name, category_name, ..._article },
