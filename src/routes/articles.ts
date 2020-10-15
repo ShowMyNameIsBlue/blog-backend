@@ -2,14 +2,18 @@ import * as Router from 'koa-router';
 import Utils from '../utils';
 import ArticlesService from '../service/Articles';
 import * as fs from 'fs';
+import Auths from '../auth';
+
 export default class ArticlesRoute {
   private router: Router;
   article: ArticlesService;
   utils: Utils;
+  auth: Auths;
   constructor() {
     this.router = new Router();
     this.article = new ArticlesService();
     this.utils = Utils.getInstance();
+    this.auth = new Auths();
     this.init();
   }
   /**
@@ -17,31 +21,36 @@ export default class ArticlesRoute {
    */
   init(): void {
     // 上传博文
-    this.router.post('/upload', async (ctx) => {
-      const r: any = await this.uploadFile(ctx);
-      const { title, content, tag, category } = r;
-      const pageviews: number = 0;
-      const result = await this.article.uploadBlog(
-        title,
-        content,
-        tag,
-        category,
-        pageviews
-      );
-      if (result.success) {
-        const { data, code } = result;
-        ctx.body = {
-          data,
-          code
-        };
-      } else {
-        ctx.body = {
-          code: result.code,
-          msg: result.msg
-        };
-        ctx.throw(result.code, result.msg);
+    this.router.post(
+      '/upload',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      async (ctx) => {
+        const r: any = await this.uploadFile(ctx);
+        const { title, content, tag, category } = r;
+        const pageviews: number = 0;
+        const result = await this.article.uploadBlog(
+          title,
+          content,
+          tag,
+          category,
+          pageviews
+        );
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
       }
-    });
+    );
 
     // 获取博文
     this.router.get('/:aid', async (ctx) => {

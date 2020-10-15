@@ -4,7 +4,9 @@ import TagRoute from './tag';
 import CategoryRoute from './category';
 import ArticlesRoute from './articles';
 import ImagesRoute from './images';
+import LinksRoute from './links';
 import Auths from '../auth';
+
 export default class RouterObj {
   prefix: string;
   private router: any;
@@ -14,6 +16,7 @@ export default class RouterObj {
   auth: Auths;
   articles: ArticlesRoute;
   images: ImagesRoute;
+  links: LinksRoute;
   constructor(prefix: string = '/api/v0') {
     this.prefix = prefix;
     this.router = new Router({ prefix });
@@ -23,6 +26,7 @@ export default class RouterObj {
     this.category = new CategoryRoute();
     this.articles = new ArticlesRoute();
     this.images = new ImagesRoute();
+    this.links = new LinksRoute();
     this.init();
   }
 
@@ -55,8 +59,6 @@ export default class RouterObj {
     // 博文路由
     this.router.use(
       '/articles',
-      this.auth.sessionAuth,
-      this.auth.ownerAuth,
       this.articles.getRouter().routes(),
       this.articles.getRouter().allowedMethods()
     );
@@ -64,10 +66,15 @@ export default class RouterObj {
     // 图片路由
     this.router.use(
       '/images',
-      this.auth.sessionAuth,
-      this.auth.ownerAuth,
       this.images.getRouter().routes(),
       this.images.getRouter().allowedMethods()
+    );
+
+    // 友链路由
+    this.router.use(
+      '/links',
+      this.links.getRouter().routes(),
+      this.links.getRouter().allowedMethods()
     );
   }
 

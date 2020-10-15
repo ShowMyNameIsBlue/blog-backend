@@ -1,6 +1,7 @@
 import * as Router from 'koa-router';
 import Utils from '../utils';
 import CategoryService from '../service/Category';
+
 export default class CategoryRoute {
   private router: Router;
   category: CategoryService;
