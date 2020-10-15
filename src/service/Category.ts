@@ -26,4 +26,35 @@ export default class CategoryService {
         : { success: false, msg: '创建分类失败', code: 500 };
     }
   }
+
+  /**
+   * 获取分类
+   * @param limit
+   * @param skip
+   */
+  async getCategory(limit: number, skip: number) {
+    try {
+      const totalSql: string = this.Db.formatSql(
+        `select count(*) as total from category`,
+        [skip, limit]
+      );
+      const _total: any[] = await this.Db.query(totalSql);
+      const { total } = _total[0];
+      if (total && total > skip) {
+        const dataSql: string = this.Db.formatSql(
+          `select * from category limit ?,?`,
+          [skip, limit]
+        );
+        const data: object = await this.Db.query(dataSql);
+        return { total, data, skip, limit };
+      } else {
+        return { total, data: [], skip, limit };
+      }
+    } catch (e) {
+      console.error(e);
+      return e.code && e.msg
+        ? e
+        : { success: false, msg: '获取分类失败', code: 500 };
+    }
+  }
 }

@@ -41,8 +41,6 @@ export default class RouterObj {
     // 博文标签路由
     this.router.use(
       '/tag',
-      this.auth.sessionAuth,
-      this.auth.ownerAuth,
       this.tag.getRouter().routes(),
       this.tag.getRouter().allowedMethods()
     );
@@ -50,8 +48,6 @@ export default class RouterObj {
     // 博文分类路由
     this.router.use(
       '/category',
-      this.auth.sessionAuth,
-      this.auth.ownerAuth,
       this.category.getRouter().routes(),
       this.category.getRouter().allowedMethods()
     );
