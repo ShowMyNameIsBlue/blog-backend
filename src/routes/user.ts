@@ -19,30 +19,35 @@ export default class UserRoute {
    */
   init(): void {
     // 用户注册
-    this.router.post('/register', async (ctx) => {
-      this.utils.required(
-        {
-          body: ['username', 'password']
-        },
-        ctx
-      );
+    this.router.post(
+      '/register',
+      this.auths.sessionAuth,
+      this.auths.ownerAuth,
+      async (ctx) => {
+        this.utils.required(
+          {
+            body: ['username', 'password']
+          },
+          ctx
+        );
 
-      const { username, password } = ctx.request.body;
-      const result = await this.user.register(username, password);
-      if (result.success) {
-        const { data, code } = result;
-        ctx.body = {
-          data,
-          code
-        };
-      } else {
-        ctx.body = {
-          code: result.code,
-          msg: result.msg
-        };
-        ctx.throw(result.code, result.msg);
+        const { username, password } = ctx.request.body;
+        const result = await this.user.register(username, password);
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
       }
-    });
+    );
 
     // 用户登录
     this.router.post('/login', async (ctx: any) => {
