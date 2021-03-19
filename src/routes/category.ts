@@ -61,6 +61,66 @@ export default class CategoryRoute {
       const result = await this.category.getCategory(limit, skip);
       ctx.body = result;
     });
+
+    // 更新分类
+    this.router.put(
+      '/update',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      async (ctx) => {
+        this.utils.required(
+          {
+            body: ['newName', 'oldName']
+          },
+          ctx
+        );
+        const { newName, oldName } = ctx.request.body;
+        const result = await this.category.updateCategory(newName, oldName);
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
+      }
+    );
+
+    // 删除分类
+    this.router.delete(
+      '/delCategory',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      async (ctx) => {
+        this.utils.required(
+          {
+            body: ['name']
+          },
+          ctx
+        );
+        const { name } = ctx.request.body;
+        const result = await this.category.delCategory(name);
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
+      }
+    );
   }
 
   getRouter(): Router {

@@ -71,4 +71,12 @@ export default class LinksService {
         : { success: false, msg: '获取友链失败', code: 500 };
     }
   }
+
+  /**
+   * 删除友链
+   * @param lid 友链id
+   */
+  // async delLinks(lid: number) {
+
+  // }
 }

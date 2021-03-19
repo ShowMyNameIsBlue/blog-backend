@@ -25,7 +25,18 @@ export default class ImagesRoute {
       async (ctx) => {
         const r: any = await this.uploadFile(ctx);
         const { path } = r;
-        const result = await this.image.uploadImage(path);
+        this.utils.required(
+          {
+            body: ['articles_aid', 'imgOrder']
+          },
+          ctx
+        );
+        const { imgOrder, articles_aid } = ctx.request.body;
+        const result = await this.image.uploadImage(
+          path,
+          articles_aid,
+          imgOrder
+        );
         if (result.success) {
           const { data, code } = result;
           ctx.body = {

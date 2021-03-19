@@ -13,10 +13,10 @@ export default class ImagesService {
    * 上传图片
    * @param imgPath 图片路径
    */
-  async uploadImage(imgPath: string) {
+  async uploadImage(imgPath: string, articles_aid: string, imgOrder: number) {
     try {
       const sql: string = this.Db.formatSql(`insert into images set ?`, [
-        { imgPath }
+        { imgPath, articles_aid, imgOrder }
       ]);
       const data: object = await this.Db.query(sql);
       return { success: true, data, code: 0 };

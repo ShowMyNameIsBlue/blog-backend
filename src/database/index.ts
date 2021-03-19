@@ -66,7 +66,7 @@ export default class DbInstance {
         );
         connection.queryAsync = promisify(connection.query);
         connection.rollbackAsync = () => {
-          return new Promise((resolve) => {
+          return new Promise<void>((resolve) => {
             connection.rollback(() => {
               connection.release();
               resolve();
@@ -74,7 +74,7 @@ export default class DbInstance {
           });
         };
         connection.commitAsync = () => {
-          return new Promise((resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
             connection.commit((err: Error) => {
               connection.release();
               if (err) return reject(err);

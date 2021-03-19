@@ -84,16 +84,24 @@ export default class ArticlesService {
   }
 
   /**
-   * 获取特定博文
+   * 获取特定博文详情
    * @param aid 博文标识
    */
   async getOne(aid: string) {
     try {
+      // 获取博文的分类，标签和详情和评论和图片
       const sql = this.Db.formatSql(
-        `select a.id, a.aid,a.title,a.content,a.pageviews,a.features,ac.category_name 
-        ,at.tag_name ,a.createdAt,a.updatedAt
-        from articles as a join articles_category as ac on
-        a.aid = ac.articles_aid join articles_tag  as at  on a.aid = at.articles_aid
+        `select 
+        a.id, a.aid,a.title,a.content,a.pageviews,a.features,a.createdAt,a.updatedAt,
+        ac.category_name,
+        at.tag_name,
+        c.id as cid,c.visitor,c.mail,c.url,c.content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
+        i.imgPath,i.imgOrder
+        from articles as a 
+        left join articles_category as ac on a.aid = ac.articles_aid 
+        left join articles_tag as at  on a.aid = at.articles_aid
+        left join comments  as c on a.aid = c.articles_aid
+        left join images as i on a.aid = i.articles_aid
         where a.aid = ?`,
         [aid]
       );
@@ -103,7 +111,7 @@ export default class ArticlesService {
       console.error(e);
       return e.code && e.msg
         ? e
-        : { success: false, msg: '创建标签失败', code: 500 };
+        : { success: false, msg: '获取博文失败', code: 500 };
     }
   }
 
@@ -126,10 +134,14 @@ export default class ArticlesService {
       ? this.Db.formatSql(`a.title like ?`, [`%${title}%`], true)
       : null;
     const totalSql: string = this.Db.formatSql(
-      `select count(*) as total from articles as a join articles_category 
-      as ac on a.aid = ac.articles_aid join articles_tag  as at  on a.aid = at.articles_aid  where 1=1 ${
-        tagSql ? `and ${tagSql}` : ''
-      } ${categorySql ? `and ${categorySql}` : ''} 
+      `select count(*) as total from articles as a 
+      left join articles_category as ac on a.aid = ac.articles_aid 
+      left join articles_tag  as at  on a.aid = at.articles_aid 
+      left join comments  as c on a.aid = c.articles_aid
+      left join images as i on a.aid = i.articles_aid
+      where 1=1 ${tagSql ? `and ${tagSql}` : ''} ${
+        categorySql ? `and ${categorySql}` : ''
+      } 
       ${titleSql ? `and ${titleSql}` : ''}`,
       []
     );
@@ -139,9 +151,17 @@ export default class ArticlesService {
       // 判断查询结果是否为空
       if (total && total > skip) {
         const dataSql: string = this.Db.formatSql(
-          `select a.id, a.aid,a.title,a.content,a.pageviews,a.features,ac.category_name ,
-          at.tag_name ,a.createdAt,a.updatedAt from articles as a join articles_category 
-          as ac on a.aid = ac.articles_aid join articles_tag  as at  on a.aid = at.articles_aid 
+          `select 
+          a.id, a.aid,a.title,a.content,a.pageviews,a.features,a.createdAt,a.updatedAt,
+          ac.category_name,
+          at.tag_name,
+          c.id as cid,c.visitor,c.mail,c.url,c.content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
+          i.imgPath,i.imgOrder
+          from articles as a 
+          left join articles_category as ac on a.aid = ac.articles_aid
+          left join articles_tag  as at  on a.aid = at.articles_aid
+          left join comments  as c on a.aid = c.articles_aid
+          left join images as i on a.aid = i.articles_aid
           where 1=1 ${tagSql ? `and ${tagSql}` : ''} ${
             categorySql ? `and ${categorySql}` : ''
           } 
@@ -163,6 +183,62 @@ export default class ArticlesService {
       return e.code && e.msg
         ? e
         : { success: false, msg: '获取博文失败', code: 500 };
+    }
+  }
+
+  /**
+   * 删除博文
+   * @param aid 博文标识
+   */
+
+  async delBLogs(aid: string) {
+    const conn: any = await this.Db.getConnection();
+    try {
+      await conn.beginTransactionAsync();
+    } catch (e) {
+      console.error(e);
+      return { success: false, code: 500, msg: '设置删除事务失败' };
+    }
+    try {
+      const delArticle: string = this.Db.formatSql(
+        `delete from articles where aid = ?`,
+        [aid]
+      );
+      const delComments: string = this.Db.formatSql(
+        `delete from comments where articles_aid = ?`,
+        [aid]
+      );
+      const delReply: string = this.Db.formatSql(
+        `delete from comments_reply where articles_aid = ?`,
+        [aid]
+      );
+      const delImages: string = this.Db.formatSql(
+        `delete from images where articles_aid = ?`,
+        [aid]
+      );
+      const _article = await this.Db.query(delArticle);
+      const _comments = await this.Db.query(delComments);
+      const _reply = await this.Db.query(delReply);
+      const _images = await this.Db.query(delImages);
+      // 操作成功后提交事务
+      await conn.commitAsync();
+      return {
+        success: true,
+        data: {
+          article: _article,
+          comments: _comments,
+          reply: _reply,
+          image: _images
+        },
+        code: 0
+      };
+    } catch (e) {
+      console.error(e);
+      // 出现异常回滚事务
+      await conn.rollbackAsync();
+      return e.code && e.msg
+        ? e
+        : { success: false, msg: '删除博文失败', code: 500 };
     }
   }
 }

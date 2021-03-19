@@ -3,6 +3,8 @@ import UserRoute from './user';
 import TagRoute from './tag';
 import CategoryRoute from './category';
 import ArticlesRoute from './articles';
+import CommentsRoute from './comments';
+import MessageRoute from './messages';
 import ImagesRoute from './images';
 import LinksRoute from './links';
 import Auths from '../auth';
@@ -15,6 +17,8 @@ export default class RouterObj {
   category: CategoryRoute;
   auth: Auths;
   articles: ArticlesRoute;
+  comments: CommentsRoute;
+  message: MessageRoute;
   images: ImagesRoute;
   links: LinksRoute;
   constructor(prefix: string = '/api/v0') {
@@ -25,6 +29,7 @@ export default class RouterObj {
     this.tag = new TagRoute();
     this.category = new CategoryRoute();
     this.articles = new ArticlesRoute();
+    this.comments = new CommentsRoute();
     this.images = new ImagesRoute();
     this.links = new LinksRoute();
     this.init();
@@ -58,14 +63,24 @@ export default class RouterObj {
       this.articles.getRouter().routes(),
       this.articles.getRouter().allowedMethods()
     );
-
+    // 博文评论路由
+    this.router.use(
+      '/comments',
+      this.comments.getRouter().routes(),
+      this.comments.getRouter().allowedMethods()
+    );
+    // 留言路由
+    this.router.use(
+      '/comments',
+      this.message.getRouter().routes(),
+      this.message.getRouter().allowedMethods()
+    );
     // 图片路由
     this.router.use(
       '/images',
       this.images.getRouter().routes(),
       this.images.getRouter().allowedMethods()
     );
-
     // 友链路由
     this.router.use(
       '/links',

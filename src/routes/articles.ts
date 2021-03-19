@@ -92,6 +92,36 @@ export default class ArticlesRoute {
       const result = await this.article.getBlogs(condition, limit, skip);
       ctx.body = result;
     });
+
+    // 删除博文
+    this.router.delete(
+      '/:aid',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      async (ctx) => {
+        this.utils.required(
+          {
+            params: ['aid']
+          },
+          ctx
+        );
+        const { aid } = ctx.params;
+        const result = await this.article.delBLogs(aid);
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
+      }
+    );
   }
 
   private uploadFile(ctx: any) {
