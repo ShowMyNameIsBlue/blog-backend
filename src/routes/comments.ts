@@ -32,7 +32,7 @@ export default class CommentsRoute {
         articles_aid,
         commentMeta,
         url
-      } = ctx.body.request;
+      } = ctx.request.body;
       const result = await this.comments.createComment(
         visitor,
         mail,
@@ -68,19 +68,7 @@ export default class CommentsRoute {
       skip = parseInt(skip) || 0;
       limit = parseInt(limit) || 10;
       const result = await this.comments.getComments(cid, skip, limit);
-      if (result.success) {
-        const { data, code } = result;
-        ctx.body = {
-          data,
-          code
-        };
-      } else {
-        ctx.body = {
-          code: result.code,
-          msg: result.msg
-        };
-        ctx.throw(result.code, result.msg);
-      }
+      ctx.body = result;
     });
 
     //删除评论

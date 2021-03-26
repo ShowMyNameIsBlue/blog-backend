@@ -76,6 +76,18 @@ export default class Utils {
     }
     return result;
   }
+
+  // 数组去重
+  delWeight(arr: Array<any>): Array<any> {
+    const map = new Map();
+    for (let item of arr) {
+      let temp = JSON.stringify(item);
+      if (!map.has(temp)) {
+        map.set(temp, item);
+      }
+    }
+    return [...map.values()];
+  }
   public static getInstance(): Utils {
     if (!this.instance) return new Utils();
     return this.instance;

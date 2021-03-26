@@ -122,6 +122,31 @@ export default class ArticlesRoute {
         }
       }
     );
+
+    // 更新浏览量
+    this.router.post('/pageViews', async (ctx) => {
+      this.utils.required(
+        {
+          body: ['aid']
+        },
+        ctx
+      );
+      const { aid } = ctx.request.body;
+      const result = await this.article.updatePageViews(aid);
+      if (result.success) {
+        const { data, code } = result;
+        ctx.body = {
+          data,
+          code
+        };
+      } else {
+        ctx.body = {
+          code: result.code,
+          msg: result.msg
+        };
+        ctx.throw(result.code, result.msg);
+      }
+    });
   }
 
   private uploadFile(ctx: any) {

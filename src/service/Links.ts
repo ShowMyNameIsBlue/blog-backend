@@ -76,7 +76,18 @@ export default class LinksService {
    * 删除友链
    * @param lid 友链id
    */
-  // async delLinks(lid: number) {
-
-  // }
+  async delLinks(lid: number) {
+    try {
+      const sql: string = this.Db.formatSql(`delete from links where id = ?`, [
+        lid
+      ]);
+      const data: object = await this.Db.query(sql);
+      return { success: true, data, code: 0 };
+    } catch (e) {
+      console.error(e);
+      return e.code && e.msg
+        ? e
+        : { success: false, msg: '删除友链失败', code: 500 };
+    }
+  }
 }

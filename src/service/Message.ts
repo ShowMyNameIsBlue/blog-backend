@@ -42,10 +42,12 @@ export default class MessageService {
           url
         }
       ]);
-      const data: object = await this.Db.query(sql);
+      await this.Db.query(sql);
       return {
         success: true,
-        data: data,
+        data: {
+          mid: mid
+        },
         code: 0
       };
     } catch (e) {
@@ -76,13 +78,44 @@ export default class MessageService {
         const dataSql: string = this.Db.formatSql(
           `select 
            m.id,m.mid,m.messager,m.mail,m.url,m.content,m.createdAt,m.updatedAt,
-           c.id as cid,c.visitor,c.mail,c.url,c.content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
+           c.id as cid,c.visitor,c.mail as c_mail,c.url as c_url,c.content as c_content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt
            from message as m
            left join comments as c on m.mid = c.articles_aid`,
           [skip, limit]
         );
-        const data: object = await this.Db.query(dataSql);
-        return { total, data, skip, limit };
+        const data: Array<any> = await this.Db.query(dataSql);
+        const resultData: Array<any> = [];
+        let mid: string = data[0].mid;
+        let formatData: any = { comments: [] };
+        data.forEach((e: any) => {
+          if (e.mid != mid) {
+            resultData.push(formatData);
+            mid = e.mid;
+            formatData = { comments: [] };
+          }
+          const comment: any = {};
+          if (e.cid) {
+            comment.cid = e.cid;
+            comment.visitor = e.visitor;
+            comment.mail = e.mail;
+            comment.url = e.url;
+            comment.content = e.c_content;
+            comment.replyNum = e.replyNum;
+            comment.createdAt = e.com_createdAt;
+            comment.updatedAt = e.com_updatedAt;
+            formatData.comments.push(comment);
+          }
+          formatData.id = e.id;
+          formatData.mid = e.mid;
+          formatData.messager = e.messager;
+          formatData.mail = e.mail;
+          formatData.url = e.url;
+          formatData.content = e.content;
+          formatData.createdAt = e.createdAt;
+          formatData.updatedAt = e.updatedAt;
+        });
+        resultData.push(formatData);
+        return { total: resultData.length, data: resultData, skip, limit };
       } else {
         return {
           total,
@@ -113,7 +146,7 @@ export default class MessageService {
     }
     try {
       const delMessage: string = this.Db.formatSql(
-        `delete from articles where mid=?`,
+        `delete from message where mid=?`,
         [mid]
       );
       const delComments: string = this.Db.formatSql(

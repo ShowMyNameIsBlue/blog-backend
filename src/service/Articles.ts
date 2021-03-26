@@ -59,18 +59,23 @@ export default class ArticlesService {
         `insert into articles_category set ?`,
         [{ articles_aid: aid, category_name: category }]
       );
-
-      const _article = await this.Db.query(sql1);
-      const _tag = await this.Db.query(sql2);
-      const _category = await this.Db.query(sql3);
-      const { tag_name } = _tag;
-      const { category_name } = _category;
+      await this.Db.query(sql1);
+      await this.Db.query(sql2);
+      await this.Db.query(sql3);
 
       // 操作成功后提交事务
       await conn.commitAsync();
       return {
         success: true,
-        data: { tag_name, category_name, ..._article },
+        data: {
+          tag,
+          category,
+          title,
+          content,
+          pageviews,
+          aid,
+          features
+        },
         code: 0
       };
     } catch (e) {
@@ -95,7 +100,7 @@ export default class ArticlesService {
         a.id, a.aid,a.title,a.content,a.pageviews,a.features,a.createdAt,a.updatedAt,
         ac.category_name,
         at.tag_name,
-        c.id as cid,c.visitor,c.mail,c.url,c.content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
+        c.id as cid,c.visitor,c.mail,c.url,c.content as c_content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
         i.imgPath,i.imgOrder
         from articles as a 
         left join articles_category as ac on a.aid = ac.articles_aid 
@@ -106,7 +111,43 @@ export default class ArticlesService {
         [aid]
       );
       const data = await this.Db.query(sql);
-      return { success: true, data, code: 0 };
+      const formatData: any = { comments: [], images: [], tags: [] };
+      data.forEach((e: any) => {
+        const image: any = {};
+        const comment: any = {};
+        const tag: any = {};
+        if (e.imgPath) {
+          image.imgPath;
+          image.imgOrder = e.imgOrder;
+          formatData.images.push(image);
+        }
+        if (e.cid) {
+          comment.cid = e.cid;
+          comment.visitor = e.visitor;
+          comment.mail = e.mail;
+          comment.url = e.url;
+          comment.content = e.c_content;
+          comment.replyNum = e.replyNum;
+          comment.createdAt = e.com_createdAt;
+          comment.updatedAt = e.com_updatedAt;
+          formatData.comments.push(comment);
+        }
+        if (e.tag_name && !formatData.tags.includes(e.tag_name)) {
+          tag.name = e.tag_name;
+          formatData.tags.push(tag);
+        }
+        formatData.id = e.id;
+        formatData.aid = e.aid;
+        formatData.title = e.title;
+        formatData.content = e.content;
+        formatData.pageviews = e.pageviews;
+        formatData.features = e.features;
+        formatData.category = e.category_name;
+        formatData.createdAt = e.createdAt;
+        formatData.updatedAt = e.updatedAt;
+      });
+      formatData.tags = this.utils.delWeight(formatData.tags);
+      return { success: true, data: formatData, code: 0 };
     } catch (e) {
       console.error(e);
       return e.code && e.msg
@@ -155,7 +196,7 @@ export default class ArticlesService {
           a.id, a.aid,a.title,a.content,a.pageviews,a.features,a.createdAt,a.updatedAt,
           ac.category_name,
           at.tag_name,
-          c.id as cid,c.visitor,c.mail,c.url,c.content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
+          c.id as cid,c.visitor,c.mail,c.url,c.content as c_content,c.replyNum,c.createdAt as com_createdAt,c.updatedAt as com_updatedAt,
           i.imgPath,i.imgOrder
           from articles as a 
           left join articles_category as ac on a.aid = ac.articles_aid
@@ -168,8 +209,52 @@ export default class ArticlesService {
           ${titleSql ? `and ${titleSql}` : ''} limit ?,?`,
           [skip, limit]
         );
-        const data: object = await this.Db.query(dataSql);
-        return { total, data, skip, limit };
+        const data: Array<any> = await this.Db.query(dataSql);
+        const resultData: Array<any> = [];
+        let aid: string = data[0].aid;
+        let formatData: any = { comments: [], images: [], tags: [] };
+        data.forEach((e: any) => {
+          if (e.aid != aid) {
+            formatData.tags = this.utils.delWeight(formatData.tags);
+            resultData.push(formatData);
+            aid = e.aid;
+            formatData = { comments: [], images: [], tags: [] };
+          }
+          const image: any = {};
+          const comment: any = {};
+          const tag: any = {};
+          if (e.imgPath) {
+            image.imgPath;
+            image.imgOrder = e.imgOrder;
+            formatData.images.push(image);
+          }
+          if (e.cid) {
+            comment.cid = e.cid;
+            comment.visitor = e.visitor;
+            comment.mail = e.mail;
+            comment.url = e.url;
+            comment.content = e.c_content;
+            comment.replyNum = e.replyNum;
+            comment.createdAt = e.com_createdAt;
+            comment.updatedAt = e.com_updatedAt;
+            formatData.comments.push(comment);
+          }
+          if (e.tag_name && !formatData.tags.includes(e.tag_name)) {
+            tag.name = e.tag_name;
+            formatData.tags.push(tag);
+          }
+          formatData.id = e.id;
+          formatData.aid = e.aid;
+          formatData.title = e.title;
+          formatData.content = e.content;
+          formatData.pageviews = e.pageviews;
+          formatData.features = e.features;
+          formatData.category = e.category_name;
+          formatData.createdAt = e.createdAt;
+          formatData.updatedAt = e.updatedAt;
+        });
+        resultData.push(formatData);
+        return { total: resultData.length, data: resultData, skip, limit };
       } else {
         return {
           total,
@@ -239,6 +324,29 @@ export default class ArticlesService {
       return e.code && e.msg
         ? e
         : { success: false, msg: '删除博文失败', code: 500 };
+    }
+  }
+
+  /**
+   * 增加浏览量
+   */
+  async updatePageViews(aid: string) {
+    try {
+      const sql: string = this.Db.formatSql(
+        ` update articles set pageviews =pageviews+1 where aid =? `,
+        [aid]
+      );
+      const data: object = await this.Db.query(sql);
+      return {
+        success: true,
+        data: data,
+        code: 0
+      };
+    } catch (e) {
+      console.error(e);
+      return e.code && e.msg
+        ? e
+        : { success: false, msg: '增加浏览量失败', code: 500 };
     }
   }
 }

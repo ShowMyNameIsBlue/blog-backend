@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS `message` (
   `content` text NOT NULL,
   `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
   INDEX `mid` (`mid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

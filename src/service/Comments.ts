@@ -101,13 +101,14 @@ export default class CommentsService {
         let allReplySql: string = '';
         allReply.forEach((e: any) => {
           const { replay_id } = e;
-          allReplySql += `or id = ${replay_id}`;
+          allReplySql += ` or id = ${replay_id}`;
         });
+        allReplySql = allReplySql.replace('or', '');
         const dataSql: string = this.Db.formatSql(
-          `select * from comments where 1=1 ${allReplySql}`,
+          `select * from comments ${allReplySql ? `where ${allReplySql}` : ''}`,
           []
         );
-        const data: object = this.Db.query(dataSql);
+        const data: object = await this.Db.query(dataSql);
         return { total, data, skip, limit };
       } else {
         const data: any[] = [];
@@ -143,12 +144,15 @@ export default class CommentsService {
       // 将查询结果拼接成字符串
       let _allSecondStr: string = '';
       _allSecond.forEach((e: any) => {
-        const { comments_id } = e;
-        _allSecondStr += `or id = ${comments_id}`;
+        const { replay_id } = e;
+        _allSecondStr += ` or id = ${replay_id}`;
       });
+      _allSecondStr = _allSecondStr.replace('or', '');
       // 删除所有二级评论
-      const delAllSecond: string = await this.Db.formatSql(
-        `delete from comments where 1=1 ${_allSecondStr}`,
+      const delAllSecond: string = this.Db.formatSql(
+        `delete from comments  ${
+          _allSecondStr ? `where ${_allSecondStr}` : ''
+        }`,
         []
       );
       const _second: object = await this.Db.query(delAllSecond);

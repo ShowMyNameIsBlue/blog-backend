@@ -61,6 +61,36 @@ export default class LinksRoute {
       const result = await this.link.getLinks(limit, skip);
       ctx.body = result;
     });
+
+    // 删除友链
+    this.router.get(
+      '/:lid',
+      this.auth.sessionAuth,
+      this.auth.ownerAuth,
+      async (ctx) => {
+        this.utils.required(
+          {
+            params: ['lid']
+          },
+          ctx
+        );
+        const { lid } = ctx.params;
+        const result = await this.link.delLinks(lid);
+        if (result.success) {
+          const { data, code } = result;
+          ctx.body = {
+            data,
+            code
+          };
+        } else {
+          ctx.body = {
+            code: result.code,
+            msg: result.msg
+          };
+          ctx.throw(result.code, result.msg);
+        }
+      }
+    );
   }
 
   getRouter(): Router {

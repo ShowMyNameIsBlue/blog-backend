@@ -30,6 +30,7 @@ export default class RouterObj {
     this.category = new CategoryRoute();
     this.articles = new ArticlesRoute();
     this.comments = new CommentsRoute();
+    this.message = new MessageRoute();
     this.images = new ImagesRoute();
     this.links = new LinksRoute();
     this.init();
@@ -71,7 +72,7 @@ export default class RouterObj {
     );
     // 留言路由
     this.router.use(
-      '/comments',
+      '/message',
       this.message.getRouter().routes(),
       this.message.getRouter().allowedMethods()
     );

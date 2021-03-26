@@ -49,21 +49,11 @@ export default class MessageRoute {
 
     // 获取留言
     this.router.get('/all', async (ctx) => {
-      const { skip, limit } = ctx.params;
+      let { skip, limit } = ctx.params;
+      skip = parseInt(skip) || 0;
+      limit = parseInt(limit) || 10;
       const result = await this.message.getMessages(skip, limit);
-      if (result.success) {
-        const { data, code } = result;
-        ctx.body = {
-          data,
-          code
-        };
-      } else {
-        ctx.body = {
-          code: result.code,
-          msg: result.msg
-        };
-        ctx.throw(result.code, result.msg);
-      }
+      ctx.body = result;
     });
 
     // 删除留言
